@@ -83,7 +83,7 @@ Measures how close the state is to an eigenstate:
 ```julia
 E = energy_expectation(mps, hamiltonian)
 ΔE = energy_variance(mps, hamiltonian)
-println("Energy: $E ± $(sqrt(ΔE))")
+println("Energy: E ± (sqrt(ΔE))")
 
 # Check if eigenstate
 if ΔE < 1e-10
