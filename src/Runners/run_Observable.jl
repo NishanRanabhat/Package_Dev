@@ -9,10 +9,10 @@
 # - Load simulation config and find simulation data
 # - Load MPS for specified sweeps
 # - Calculate requested observables
-# - Return results
+# - Save results using database functions
 #
 # DATABASE/SAVING:
-# - Handled separately in Database_observable_utils.jl (to be created)
+# - Uses Database_observable_utils.jl functions for saving
 #
 # ============================================================================
 
@@ -157,7 +157,7 @@ Dispatch to appropriate observable function based on type.
 # Returns
 - Calculated observable value (type depends on observable)
 """
-function calculate_observable(obs_type::String, params::Dict, mps::Vector{<:AbstractArray{T1,3}}, ham::Union{Vector{<:AbstractArray{T2,3}},Nothing}=nothing) where {T1,T2}
+function calculate_observable(obs_type::String, params::Dict, mps::Vector{<:AbstractArray{T1,3}}, ham::Union{Vector{<:AbstractArray{T2,4}},Nothing}=nothing) where {T1,T2}
     
     if obs_type == "single_site_expectation"
         site = params["site"]
@@ -217,53 +217,45 @@ function calculate_observable(obs_type::String, params::Dict, mps::Vector{<:Abst
 end
 
 # ============================================================================
-# PART 4: Main Observable Runner (Calculation Only)
+# PART 4: Main Observable Runner (With Database Integration)
 # ============================================================================
 
 """
-    run_observable_calculation_from_config(obs_config; base_dir="data") → Dict
+    run_observable_calculation_from_config(obs_config; base_dir="data", obs_base_dir="observables")
+        -> (String, String)
 
-Main entry point for observable calculations.
-
-IMPORTANT: This function only CALCULATES observables, it does NOT save them.
-Saving is handled separately by database functions.
+Main entry point for observable calculations with automatic saving.
 
 # Arguments
 - `obs_config::Dict`: Observable configuration
 - `base_dir::String`: Base directory for simulation data (default: "data")
+- `obs_base_dir::String`: Base directory for observable data (default: "observables")
 
 # Returns
-- `Dict` with keys:
-  - "sim_run_id": Simulation run identifier
-  - "sim_run_dir": Path to simulation data
-  - "observable_type": Type of observable calculated
-  - "observable_params": Parameters used
-  - "results": Vector of (sweep, observable_value, extra_data) tuples
+- `(obs_run_id, obs_run_dir)`: Observable run identifier and directory
 
 # Workflow
 1. Load simulation config from referenced file
 2. Find simulation run using config hash
-3. Determine sweeps to process
+3. Setup observable directory structure
 4. For each sweep:
    - Load MPS
    - Calculate observable
-5. Return all results
+   - Save immediately
+5. Finalize metadata
 
 # Example
 ```julia
-obs_config = JSON.parsefile("obs_magnetization.json")
-results = run_observable_calculation_from_config(obs_config)
+obs_config = JSON.parsefile("configs/obs_magnetization.json")
+obs_run_id, obs_run_dir = run_observable_calculation_from_config(obs_config)
 
-# Access results
-for (sweep, obs_value, extra_data) in results["results"]
-    println("Sweep \$sweep: \$obs_value")
-end
-
-# Later: save using database functions
-save_observable_results(results, obs_config)  # From Database_observable_utils.jl
+# Load results later
+results = load_all_observable_results(obs_run_dir)
 ```
 """
-function run_observable_calculation_from_config(obs_config::Dict; base_dir::String="data")
+function run_observable_calculation_from_config(obs_config::Dict; 
+                                                base_dir::String="data",
+                                                obs_base_dir::String="observables")
     println("="^70)
     println("Starting Observable Calculation from Config")
     println("="^70)
@@ -272,7 +264,7 @@ function run_observable_calculation_from_config(obs_config::Dict; base_dir::Stri
     # STEP 1: Load Simulation Config and Find Run
     # ════════════════════════════════════════════════════════════════════════
     
-    println("\n[1/4] Loading simulation config and finding run...")
+    println("\n[1/5] Loading simulation config and finding run...")
     
     sim_config_file = obs_config["simulation"]["config_file"]
     
@@ -303,12 +295,26 @@ function run_observable_calculation_from_config(obs_config::Dict; base_dir::Stri
     
     sim_run_id = run_info["run_id"]
     sim_run_dir = run_info["run_dir"]
+    algorithm = sim_config["algorithm"]["type"]
     
     # ════════════════════════════════════════════════════════════════════════
-    # STEP 2: Determine Sweeps to Process
+    # STEP 2: Setup Observable Directory (NEW!)
     # ════════════════════════════════════════════════════════════════════════
     
-    println("\n[2/4] Determining sweeps to process...")
+    println("\n[2/5] Setting up observable directory...")
+    
+    # NEW: Setup observable directory structure
+    obs_run_id, obs_run_dir = setup_observable_directory(obs_config, sim_run_id, algorithm, 
+                                                         obs_base_dir=obs_base_dir)
+    
+    println("  ✓ Observable run ID: $obs_run_id")
+    println("  ✓ Observable directory: $obs_run_dir")
+    
+    # ════════════════════════════════════════════════════════════════════════
+    # STEP 3: Determine Sweeps to Process
+    # ════════════════════════════════════════════════════════════════════════
+    
+    println("\n[3/5] Determining sweeps to process...")
     
     sweeps_to_process = get_sweeps_to_process(obs_config["sweeps"], sim_run_dir)
     
@@ -316,10 +322,10 @@ function run_observable_calculation_from_config(obs_config::Dict; base_dir::Stri
     println("    Range: $(minimum(sweeps_to_process)) to $(maximum(sweeps_to_process))")
     
     # ════════════════════════════════════════════════════════════════════════
-    # STEP 3: Load Hamiltonian if Needed
+    # STEP 4: Load Hamiltonian if Needed
     # ════════════════════════════════════════════════════════════════════════
     
-    println("\n[3/4] Preparing observable calculation...")
+    println("\n[4/5] Preparing observable calculation...")
     
     obs_type = obs_config["observable"]["type"]
     obs_params = obs_config["observable"]["params"]
@@ -338,50 +344,60 @@ function run_observable_calculation_from_config(obs_config::Dict; base_dir::Stri
     end
     
     # ════════════════════════════════════════════════════════════════════════
-    # STEP 4: Calculate Observables for Each Sweep
+    # STEP 5: Calculate and Save Observables for Each Sweep (MODIFIED!)
     # ════════════════════════════════════════════════════════════════════════
     
-    println("\n[4/4] Calculating observables...")
+    println("\n[5/5] Calculating and saving observables...")
     println("="^70)
     
-    results = []
-    
-    for (idx, sweep) in enumerate(sweeps_to_process)
-        # Load MPS for this sweep
-        mps, extra_data = load_mps_sweep(sim_run_dir, sweep)
-        
-        # Calculate observable
-        obs_value = calculate_observable(obs_type, obs_params, mps.tensors, ham)
-        
-        # Store result (sweep, value, extra_data)
-        push!(results, (sweep, obs_value, extra_data))
-        
-        # Print progress
-        if idx % max(1, div(length(sweeps_to_process), 10)) == 0
-            println("  Progress: $idx/$(length(sweeps_to_process)) sweeps")
+    try
+        for (idx, sweep) in enumerate(sweeps_to_process)
+            # Load MPS for this sweep
+            mps, extra_data = load_mps_sweep(sim_run_dir, sweep)
+            
+            # Calculate observable
+            obs_value = calculate_observable(obs_type, obs_params, mps.tensors, ham)
+            
+            # NEW: Save immediately after calculation
+            save_observable_sweep(obs_value, obs_run_dir, sweep; extra_data=extra_data)
+            
+            # Print progress
+            if idx % max(1, div(length(sweeps_to_process), 10)) == 0
+                println("  Progress: $idx/$(length(sweeps_to_process)) sweeps")
+            end
         end
+        
+        # ════════════════════════════════════════════════════════════════════
+        # NEW: Finalize Observable Run
+        # ════════════════════════════════════════════════════════════════════
+        
+        println("="^70)
+        println("\n[6/6] Finalizing...")
+        finalize_observable_run(obs_run_dir, status="completed")
+        
+    catch e
+        # If calculation fails, mark as failed
+        println("\n❌ Observable calculation failed!")
+        finalize_observable_run(obs_run_dir, status="failed")
+        rethrow(e)
     end
     
     # ════════════════════════════════════════════════════════════════════════
-    # Return Results
+    # Return Observable Run Info (CHANGED!)
     # ════════════════════════════════════════════════════════════════════════
     
+    println("\n" * "="^70)
+    println("Observable Calculation Summary")
     println("="^70)
-    println("\n✓ Observable calculation complete!")
-    println("  Calculated: $obs_type")
-    println("  Sweeps processed: $(length(results))")
-    println("\nNOTE: Results are in memory. Use database functions to save.")
+    println("  Simulation run: $sim_run_id")
+    println("  Observable run: $obs_run_id")
+    println("  Observable type: $obs_type")
+    println("  Sweeps processed: $(length(sweeps_to_process))")
+    println("  Results saved in: $obs_run_dir")
     println("="^70)
     
-    # Return structured results
-    return Dict(
-        "sim_run_id" => sim_run_id,
-        "sim_run_dir" => sim_run_dir,
-        "sim_config" => sim_config,
-        "observable_type" => obs_type,
-        "observable_params" => obs_params,
-        "results" => results  # Vector of (sweep, observable_value, extra_data)
-    )
+    # NEW: Return only IDs, not results (data is saved)
+    return obs_run_id, obs_run_dir
 end
 
 # ============================================================================
@@ -428,5 +444,5 @@ function calculate_observable_at_sweep(obs_type::String, params::Dict,
     end
     
     # Calculate and return
-    return calculate_observable(obs_type, params, mps, ham)
+    return calculate_observable(obs_type, params, mps.tensors, ham)
 end
