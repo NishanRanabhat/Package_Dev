@@ -47,7 +47,7 @@ function energy_expectation(psi::Vector{<:AbstractArray{T1,3}},
     
     # Sweep left to right, contracting MPS-MPO-MPS at each site
     @inbounds for i in 1:N
-        L = contract_left(psi[i], L, ham[i])
+        L = _contract_left(psi[i], L, ham[i])
     end
     
     # Extract scalar energy

@@ -56,24 +56,24 @@ function two_site_expectation(site_i::Int, op_i::AbstractArray{T1,2},
     R = ones(1, 1)
     if site_j < N
         @inbounds for i in reverse(site_j+1:N)
-            R = contract_right(psi[i], R)
+            R = _contract_right(psi[i], R)
         end
     end
     
     # Apply operator at site_j
-    R = contract_right(psi[site_j], R, op_j)
+    R = _contract_right(psi[site_j], R, op_j)
     
     # Contract intermediate sites (if any)
     @inbounds for i in reverse(site_i+1:site_j-1)
-        R = contract_right(psi[i], R)
+        R = _contract_right(psi[i], R)
     end
     
     # Apply operator at site_i
-    R = contract_right(psi[site_i], R, op_i)
+    R = _contract_right(psi[site_i], R, op_i)
     
     # Contract remaining left sites
     @inbounds for i in reverse(1:site_i-1)
-        R = contract_right(psi[i], R)
+        R = _contract_right(psi[i], R)
     end
     
     return R[1]

@@ -28,7 +28,7 @@ println("Norm: ", norm)  # Should be ≈ 1.0 if normalized
 function inner_product(psi::Vector{<:AbstractArray{T,3}}) where T
     R = ones(1, 1)
     @inbounds for i in reverse(1:length(psi))
-        R = contract_right(psi[i], R)  # Identity contraction
+        R = _contract_right(psi[i], R)  # Identity contraction
     end
     return R[1]
 end
@@ -65,15 +65,15 @@ function single_site_expectation(site::Int, operator::AbstractArray{T1,2}, psi::
     
     # Contract from right with identity (sites after operator)
     @inbounds for i in reverse(site+1:length(psi))
-        R = contract_right(psi[i], R)  # Identity contraction
+        R = _contract_right(psi[i], R)  # Identity contraction
     end
     
     # Apply operator at site
-    R = contract_right(psi[site], R, operator)  # Operator contraction
+    R = _contract_right(psi[site], R, operator)  # Operator contraction
     
     # Contract from left with identity (sites before operator)
     @inbounds for i in reverse(1:site-1)
-        R = contract_right(psi[i], R)  # Identity contraction
+        R = _contract_right(psi[i], R)  # Identity contraction
     end
     
     return R[1]
@@ -122,14 +122,14 @@ function subsystem_expectation_sum(operator::AbstractArray{T1,2},
     R_envs[N+1] = ones(1, 1)
     
     @inbounds for i in reverse(l+1:N)  # Start from l+1, not l!
-        R_envs[i] = contract_right(psi[i], R_envs[i+1])
+        R_envs[i] = _contract_right(psi[i], R_envs[i+1])
     end
     
     # Build left environment from [1, l-1]
     L = ones(1, 1)
     if l > 1
         @inbounds for i in 1:l-1
-            L = contract_left(psi[i], L)
+            L = _contract_left(psi[i], L)
         end
     end
     
@@ -137,11 +137,11 @@ function subsystem_expectation_sum(operator::AbstractArray{T1,2},
     expectation_sum = 0.0
     
     @inbounds for i in l:m
-        temp = contract_left(psi[i], L, operator)
+        temp = _contract_left(psi[i], L, operator)
         @tensoropt expectation_sum += temp[1,2] * R_envs[i+1][1,2]  # Needs R[l+1], R[l+2], ..., R[m+1]
         
         if i < m
-            L = contract_left(psi[i], L)
+            L = _contract_left(psi[i], L)
         end
     end
     
