@@ -2,8 +2,6 @@
 using LinearAlgebra
 using TensorOperations
 
-export canonicalize, is_left_orthogonal, is_right_orthogonal, is_orthogonal
-
 function _move_orthogonality_left(A_left::Array{T,3}, A_right::Array{T,3}; normalize=true) where T
     left_index, center_index, right_index = size(A_right)
     
@@ -40,22 +38,22 @@ end
 
 # ============= Canonicalization Methods =============
 """
-    canonicalize!(mps::MPS, center::Int)
+    make_canonical!(mps::MPS, center::Int)
 
 Put MPS into mixed canonical form with orthogonality center at `center`.
 Sites 1:center-1 are left-orthogonal, sites center+1:N are right-orthogonal.
 """
 
-function canonicalize(mps::MPS, center::Int)
+function make_canonical(mps::MPS, center::Int)
     N = length(mps.tensors)
     
-    # Right-canonicalize from right to center+1
+    # Right-canonical from right to center+1
     for site in N:-1:center+1
         mps.tensors[site-1], mps.tensors[site] = 
             _move_orthogonality_left(mps.tensors[site-1], mps.tensors[site])
     end
     
-    # Left-canonicalize from left to center-1
+    # Left-canonical from left to center-1
     for site in 1:center-1
         mps.tensors[site], mps.tensors[site+1] = 
             _move_orthogonality_right(mps.tensors[site], mps.tensors[site+1])
