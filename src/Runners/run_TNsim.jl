@@ -2,7 +2,7 @@
 # PART 1: Solver Builders
 # ============================================================================
 
-function build_solver_from_config(solver_config)
+function _build_solver_from_config(solver_config)
     solver_type = solver_config["type"]
     
     if solver_type == "lanczos"
@@ -24,7 +24,7 @@ end
 # PART 2: Options Builders
 # ============================================================================
 
-function build_options_from_config(options_config, algorithm_type)
+function _build_options_from_config(options_config, algorithm_type)
     if algorithm_type == "dmrg"
         chi_max = options_config["chi_max"]
         cutoff = options_config["cutoff"]
@@ -89,7 +89,7 @@ function run_simulation_from_config(config; base_dir="data")
     #end
     
     # Setup run directory and initialize database
-    run_id, run_dir = setup_run_directory(config, base_dir=base_dir)
+    run_id, run_dir = _setup_run_directory(config, base_dir=base_dir)
     println("  ✓ Run ID: $run_id")
     println("  ✓ Data directory: $run_dir")
     
@@ -122,11 +122,11 @@ function run_simulation_from_config(config; base_dir="data")
     println("  Algorithm: $(algorithm_type)")
     
     # Build solver
-    solver = build_solver_from_config(alg_config["solver"])
+    solver = _build_solver_from_config(alg_config["solver"])
     println("  ✓ Solver: $(typeof(solver))")
     
     # Build options
-    options = build_options_from_config(alg_config["options"], algorithm_type)
+    options = _build_options_from_config(alg_config["options"], algorithm_type)
     println("  ✓ Options: $(typeof(options))")
     
     # Get run parameters
@@ -142,10 +142,10 @@ function run_simulation_from_config(config; base_dir="data")
     
     try
         if algorithm_type == "dmrg"
-            run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
+            _run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
             
         elseif algorithm_type == "tdvp"
-            run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
+            _run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
             
         else
             error("Unknown algorithm: $algorithm_type")
@@ -157,13 +157,13 @@ function run_simulation_from_config(config; base_dir="data")
         
         println("="^70)
         println("[4/5] Finalizing database...")
-        finalize_run(run_dir, status="completed")
+        _finalize_run(run_dir, status="completed")
         println("  ✓ Run marked as completed")
         
     catch e
         # If simulation fails, mark as failed
         println("\n❌ Simulation failed!")
-        finalize_run(run_dir, status="failed")
+        _finalize_run(run_dir, status="failed")
         rethrow(e)
     end
     
@@ -182,7 +182,7 @@ end
 # PART 4: Algorithm-Specific Runners
 # ============================================================================
 
-function run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
+function _run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
     energies = Float64[]
     
     for sweep in 1:n_sweeps
@@ -211,7 +211,7 @@ function run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
             "max_bond_dim" => max_bond_dim,
         )
         
-        save_mps_sweep(state, run_dir, sweep; extra_data=extra_data)
+        _save_mps_sweep(state, run_dir, sweep; extra_data=extra_data)
         
         # ────────────────────────────────────────────────────────────────────
         # Print progress
@@ -225,7 +225,7 @@ function run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
     println("\nFinal Energy: $(energies[end])")
 end
 
-function run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
+function _run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
     # Current time
     current_time = 0.0
     
@@ -267,7 +267,7 @@ function run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
             # "energy" => energy  # Uncomment if you compute it
         )
         
-        save_mps_sweep(state, run_dir, sweep; extra_data=extra_data)
+        _save_mps_sweep(state, run_dir, sweep; extra_data=extra_data)
         
         # ────────────────────────────────────────────────────────────────────
         # Print progress

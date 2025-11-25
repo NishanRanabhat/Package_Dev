@@ -25,7 +25,7 @@ using LinearAlgebra
 # ============================================================================
 
 """
-    build_operator_from_config(op_config) → Matrix
+    _build_operator_from_config(op_config) → Matrix
 
 Convert operator specification to actual matrix.
 
@@ -37,11 +37,11 @@ Convert operator specification to actual matrix.
 
 # Example
 ```julia
-Sz = build_operator_from_config("Sz")
-custom_op = build_operator_from_config([[0.5, 0], [0, -0.5]])
+Sz = _build_operator_from_config("Sz")
+custom_op = _build_operator_from_config([[0.5, 0], [0, -0.5]])
 ```
 """
-function build_operator_from_config(op_config)
+function _build_operator_from_config(op_config)
     # If already a matrix, return it
     if op_config isa AbstractArray
         return op_config
@@ -68,7 +68,7 @@ end
 # ============================================================================
 
 """
-    get_sweeps_to_process(sweep_config, run_dir) → Vector{Int}
+    _get_sweeps_to_process(sweep_config, run_dir) → Vector{Int}
 
 Determine which sweeps to process based on sweep selection config.
 
@@ -93,7 +93,7 @@ Determine which sweeps to process based on sweep selection config.
 {"selection": "time_range", "time_range": [0.0, 1.0]}  // TDVP only
 ```
 """
-function get_sweeps_to_process(sweep_config::Dict, run_dir::String)
+function _get_sweeps_to_process(sweep_config::Dict, run_dir::String)
     selection = sweep_config["selection"]
     
     # Load metadata to get available sweeps
@@ -144,7 +144,7 @@ end
 # ============================================================================
 
 """
-    calculate_observable(obs_type, params, mps, ham) → value
+    _calculate_observable(obs_type, params, mps, ham) → value
 
 Dispatch to appropriate observable function based on type.
 
@@ -157,15 +157,15 @@ Dispatch to appropriate observable function based on type.
 # Returns
 - Calculated observable value (type depends on observable)
 """
-function calculate_observable(obs_type::String, params::Dict, mps::Vector{<:AbstractArray{T1,3}}, ham::Union{Vector{<:AbstractArray{T2,4}},Nothing}=nothing) where {T1,T2}
+function _calculate_observable(obs_type::String, params::Dict, mps::Vector{<:AbstractArray{T1,3}}, ham::Union{Vector{<:AbstractArray{T2,4}},Nothing}=nothing) where {T1,T2}
     
     if obs_type == "single_site_expectation"
         site = params["site"]
-        operator = build_operator_from_config(params["operator"])
+        operator = _build_operator_from_config(params["operator"])
         return single_site_expectation(site, operator, mps)
         
     elseif obs_type == "subsystem_expectation_sum"
-        operator = build_operator_from_config(params["operator"])
+        operator = _build_operator_from_config(params["operator"])
         l = params["l"]
         m = params["m"]
         return subsystem_expectation_sum(operator, mps, l, m)
@@ -173,20 +173,20 @@ function calculate_observable(obs_type::String, params::Dict, mps::Vector{<:Abst
     elseif obs_type == "two_site_expectation"
         site_i = params["site_i"]
         site_j = params["site_j"]
-        op_i = build_operator_from_config(params["operator_i"])
-        op_j = build_operator_from_config(params["operator_j"])
+        op_i = _build_operator_from_config(params["operator_i"])
+        op_j = _build_operator_from_config(params["operator_j"])
         return two_site_expectation(site_i, op_i, site_j, op_j, mps)
         
     elseif obs_type == "correlation_function"
         site_i = params["site_i"]
         site_j = params["site_j"]
-        operator = build_operator_from_config(params["operator"])
+        operator = _build_operator_from_config(params["operator"])
         return correlation_function(site_i, site_j, operator, mps)
         
     elseif obs_type == "connected_correlation"
         site_i = params["site_i"]
         site_j = params["site_j"]
-        operator = build_operator_from_config(params["operator"])
+        operator = _build_operator_from_config(params["operator"])
         return connected_correlation(site_i, site_j, operator, mps)
         
     elseif obs_type == "entanglement_spectrum"
@@ -276,7 +276,7 @@ function run_observable_calculation_from_config(obs_config::Dict;
     println("  ✓ Loaded simulation config: $sim_config_file")
     
     # Find runs with this config
-    runs = find_runs_by_config(sim_config, base_dir)
+    runs = _find_runs_by_config(sim_config, base_dir)
     
     if isempty(runs)
         error("No simulation data found for this config!\n" *
@@ -288,7 +288,7 @@ function run_observable_calculation_from_config(obs_config::Dict;
         run_info = runs[1]
         println("  ✓ Found simulation run: $(run_info["run_id"])")
     else
-        run_info = get_latest_run_for_config(sim_config, base_dir=base_dir)
+        run_info = _get_latest_run_for_config(sim_config, base_dir=base_dir)
         println("  ⚠ Multiple runs found, using latest: $(run_info["run_id"])")
         println("    (Found $(length(runs)) runs total)")
     end
@@ -304,7 +304,7 @@ function run_observable_calculation_from_config(obs_config::Dict;
     println("\n[2/5] Setting up observable directory...")
     
     # NEW: Setup observable directory structure
-    obs_run_id, obs_run_dir = setup_observable_directory(obs_config, sim_run_id, algorithm, 
+    obs_run_id, obs_run_dir = _setup_observable_directory(obs_config, sim_run_id, algorithm, 
                                                          obs_base_dir=obs_base_dir)
     
     println("  ✓ Observable run ID: $obs_run_id")
@@ -316,7 +316,7 @@ function run_observable_calculation_from_config(obs_config::Dict;
     
     println("\n[3/5] Determining sweeps to process...")
     
-    sweeps_to_process = get_sweeps_to_process(obs_config["sweeps"], sim_run_dir)
+    sweeps_to_process = _get_sweeps_to_process(obs_config["sweeps"], sim_run_dir)
     
     println("  ✓ Sweeps to process: $(length(sweeps_to_process))")
     println("    Range: $(minimum(sweeps_to_process)) to $(maximum(sweeps_to_process))")
@@ -356,10 +356,10 @@ function run_observable_calculation_from_config(obs_config::Dict;
             mps, extra_data = load_mps_sweep(sim_run_dir, sweep)
             
             # Calculate observable
-            obs_value = calculate_observable(obs_type, obs_params, mps.tensors, ham)
+            obs_value = _calculate_observable(obs_type, obs_params, mps.tensors, ham)
             
             # NEW: Save immediately after calculation
-            save_observable_sweep(obs_value, obs_run_dir, sweep; extra_data=extra_data)
+            _save_observable_sweep(obs_value, obs_run_dir, sweep; extra_data=extra_data)
             
             # Print progress
             if idx % max(1, div(length(sweeps_to_process), 10)) == 0
@@ -373,12 +373,12 @@ function run_observable_calculation_from_config(obs_config::Dict;
         
         println("="^70)
         println("\n[6/6] Finalizing...")
-        finalize_observable_run(obs_run_dir, status="completed")
+        _finalize_observable_run(obs_run_dir, status="completed")
         
     catch e
         # If calculation fails, mark as failed
         println("\n❌ Observable calculation failed!")
-        finalize_observable_run(obs_run_dir, status="failed")
+        _finalize_observable_run(obs_run_dir, status="failed")
         rethrow(e)
     end
     
@@ -405,7 +405,7 @@ end
 # ============================================================================
 
 """
-    calculate_observable_at_sweep(obs_type, params, sim_run_dir, sweep; base_dir="data")
+    _calculate_observable_at_sweep(obs_type, params, sim_run_dir, sweep; base_dir="data")
 
 Calculate observable for a single sweep (utility function).
 
@@ -420,7 +420,7 @@ Calculate observable for a single sweep (utility function).
 
 # Example
 ```julia
-obs_value = calculate_observable_at_sweep(
+obs_value = _calculate_observable_at_sweep(
     "single_site_expectation",
     Dict("operator" => "Sz", "site" => 10),
     "data/tdvp/20241103_142530_a3f5b2c1",
@@ -428,7 +428,7 @@ obs_value = calculate_observable_at_sweep(
 )
 ```
 """
-function calculate_observable_at_sweep(obs_type::String, params::Dict, 
+function _calculate_observable_at_sweep(obs_type::String, params::Dict, 
                                        sim_run_dir::String, sweep::Int)
     # Load MPS
     mps, extra_data = load_mps_sweep(sim_run_dir, sweep)
@@ -444,5 +444,5 @@ function calculate_observable_at_sweep(obs_type::String, params::Dict,
     end
     
     # Calculate and return
-    return calculate_observable(obs_type, params, mps.tensors, ham)
+    return _calculate_observable(obs_type, params, mps.tensors, ham)
 end
