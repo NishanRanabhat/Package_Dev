@@ -16,14 +16,15 @@ function _get_tfim_channels(N, J, h, coupling_dir, field_dir)
 end
 
 """
-Heisenberg Chain: H = Jx Σᵢ σˣᵢσˣᵢ₊₁ + Jy Σᵢ σʸᵢσʸᵢ₊₁ + Jz Σᵢ σᶻᵢσᶻᵢ₊₁ + h Σᵢ σᶻᵢ
+Heisenberg Chain: H = Jx Σᵢ σˣᵢσˣᵢ₊₁ + Jy Σᵢ σʸᵢσʸᵢ₊₁ + Jz Σᵢ σᶻᵢσᶻᵢ₊₁ + hx Σᵢ σˣᵢ + hy Σᵢ σʸᵢ + hz Σᵢ σᶻᵢ
 """
-function _get_heisenberg_channels(N, Jx, Jy, Jz, h, field_dir)
+function _get_heisenberg_channels(N, Jx, Jy, Jz, hx, hy, hz)
     return [
         FiniteRangeCoupling(:X, :X, 1, Jx),
         FiniteRangeCoupling(:Y, :Y, 1, Jy),
         FiniteRangeCoupling(:Z, :Z, 1, Jz),
-        Field(field_dir, h)
+        Field(:X, hx), Field(:Y, hy), Field(:Z, hz)
+
     ]
 end
 
