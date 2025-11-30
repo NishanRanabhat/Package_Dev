@@ -5,7 +5,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/TNCodebase.git
+git clone https://github.com/NishanRanabhat/Package_Dev.git
 cd TNCodebase
 ```
 
@@ -63,7 +63,7 @@ using JSON
 using TNCodebase
 
 # Load a configuration
-config = JSON.parsefile("examples/01_ground_state_dmrg/config.json")
+config = JSON.parsefile("examples/00_quickstart_dmrg/dmrg_config.json")
 
 # Run simulation
 state, run_id, run_dir = run_simulation_from_config(config, base_dir="data")
@@ -74,6 +74,14 @@ mps, extra_data = load_mps_sweep(latest["run_dir"], 50)
 
 println("Loaded MPS with $(length(mps.tensors)) sites")
 ```
+
+---
+
+---
+
+## For full worked out examples explore
+
+ Explore the [Examples](examples/)
 
 ---
 
@@ -94,14 +102,6 @@ TNCodebase/
 ---
 
 ## Troubleshooting
-
-### Issue: "Package not found"
-**Solution**: Make sure you're in the TNCodebase directory when activating:
-```julia
-pwd()  # Check current directory
-cd("/path/to/TNCodebase")
-Pkg.activate(".")
-```
 
 ### Issue: "ERROR: LoadError: ArgumentError: Package TNCodebase not found"
 **Solution**: You need to activate the environment first:
@@ -142,26 +142,15 @@ using TNCodebase
 After installation, navigate to an example directory:
 
 ```bash
-cd examples/01_ground_state_dmrg
-julia example.jl
+cd examples/00_quickstart_dmrg
+julia dmrg_run.jl
 ```
 
 Or from Julia REPL:
 
 ```julia
-include("examples/01_ground_state_dmrg/example.jl")
+include("examples/00_quickstart_dmrg/dmrg_run.jl")
 ```
-
----
-
-## Next Steps
-
-1. Read the [Quickstart Guide](docs/quickstart.md)
-2. Explore the [Examples](examples/)
-3. Check the [API Reference](docs/api_reference/)
-4. Join discussions in Issues/Discussions
-
----
 
 ## System Requirements
 
