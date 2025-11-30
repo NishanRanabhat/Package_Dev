@@ -200,10 +200,9 @@ TNCodebase/
 │       └── custom_states/     # Site-by-site specification
 │
 ├── docs/                       # Documentation
-│   ├── quickstart.md
-│   ├── user_guide/
-│   └── api_reference/
-│
+│   ├── model_building.md
+│   ├── state_building.md
+│ 
 └── test/                       # Unit tests
 ```
 
