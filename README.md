@@ -81,7 +81,7 @@ state, run_id, run_dir = run_simulation_from_config(config)
 latest = get_latest_run_for_config(config, base_dir="data")
 mps, extra_data = load_mps_sweep(latest["run_dir"], 50)
 
-# 4. Calculate observables (coming soon)
+# 4. Calculate observables (examples coming soon)
 # obs_config = JSON.parsefile("examples/observables/magnetization.json")
 # obs_run_id, obs_run_dir = run_observable_calculation_from_config(obs_config)
 # results = load_all_observable_results(obs_run_dir)
