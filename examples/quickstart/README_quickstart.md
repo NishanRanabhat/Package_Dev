@@ -60,7 +60,6 @@ Uses **Density Matrix Renormalization Group (DMRG)**:
 ├── README.md              # This file
 ├── config.json            # All simulation parameters
 ├── run_dmrg.jl            # Main script
-└── expected_output.txt    # What you should see
 ```
 
 ---
@@ -93,8 +92,6 @@ You should see:
 - Final energy: E₀ ≈ -18.95 to -19.0
 - Convergence confirmation
 - Location of saved data
-
-See `expected_output.txt` for the complete output.
 
 ---
 
