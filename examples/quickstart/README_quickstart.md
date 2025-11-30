@@ -81,15 +81,13 @@ That's it! The script will:
 2. Build the TFIM Hamiltonian (automatic)
 3. Create random initial state (automatic)
 4. Run DMRG for 20 sweeps
-5. Save data to `Package_Dev/data/`
-6. Display results
+5. Save data to `Package_Dev/data/` (automatic)
 
 ### Expected Output
 
 You should see:
 - Configuration summary
 - Progress through sweeps
-- Final energy: E₀ ≈ -18.95 to -19.0
 - Convergence confirmation
 - Location of saved data
 
@@ -308,15 +306,6 @@ Then run the example again.
 2. Increase `chi_max` to 150 or 200
 3. Check if you're at critical point (h ≈ 1.0)
 
-### Issue: Unexpected energy
-
-**Expected:** E₀ ≈ -18.95 to -19.0 for h=0.5, N=20
-
-**If very different:**
-1. Check J and h in config
-2. Verify N matches between system and model
-3. Look for convergence warnings
-
 ---
 
 ## Technical Details
@@ -329,19 +318,19 @@ Then run the example again.
 - Good balance for demonstrations
 
 **chi_max = 100:**
-- True ground state needs χ ≈ 15-20
+- True ground state needs χ ≈ 15-40
 - chi_max=100 ensures no truncation
 - Allows exact result with plenty of margin
 
 **Random initial state with bond_dim=5:**
 - Prevents symmetry sectors from being missed
 - Small enough to start quickly
-- DMRG grows it as needed (to ~15-20)
+- DMRG grows it as needed (to ~15-40)
 
 **50 sweeps:**
 - Typical convergence: 20-30 sweeps
 - Extra sweeps confirm convergence
-- Each sweep is very fast (~0.1-0.2 sec)
+- Each sweep is very fast
 
 ### Computational Cost
 
@@ -349,10 +338,6 @@ Then run the example again.
 - N = 20 (system size)
 - χ ≈ 18 (average bond dimension)
 - d = 2 (local dimension)
-
-**Memory:** ~0.5-1 MB for MPS, environments, and MPO
-
-**Total runtime:** 5-10 seconds on modern laptop
 
 ---
 
