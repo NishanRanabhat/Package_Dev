@@ -243,7 +243,9 @@ function _get_channels_from_config(config)
             params["Jx"],
             params["Jy"],
             params["Jz"],
-            params["h"],
+            params["hx"],
+            params["hy"],
+            params["hz"],
             Symbol(params["field_dir"])
         )
         system = (type="spin", N=params["N"], dtype=dtype)
