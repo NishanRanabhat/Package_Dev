@@ -452,7 +452,7 @@ This allows users to focus on physics, not implementation details.
 - `docs/state_building.md` - State preparation
 
 **Related Examples:**
-- `examples/00_quickstart/` - DMRG ground state search
+- `examples/00_quickstart_dmrg/` - DMRG ground state search
 - `examples/models/` - Model building examples
 - `examples/states/` - State preparation examples
 
