@@ -97,12 +97,15 @@ end
 """
 #Krylov exponential solver for time evolution (TDVP)
 """
+
 struct KrylovExponential
     krylov_dim::Int
     tol::Float64
+    evol_type::Symbol  # :real or :imaginary
     
-    function KrylovExponential(krylov_dim=30, tol=1e-12)
-        new(krylov_dim, tol)
+    function KrylovExponential(krylov_dim=30, tol=1e-12, evol_type=:real)
+        @assert evol_type in (:real, :imaginary) "evol_type must be :real or :imaginary"
+        new(krylov_dim, tol, evol_type)
     end
 end
 
@@ -171,13 +174,13 @@ function _evolve(solver::KrylovExponential, H::EffectiveHamiltonian, v_init::Vec
     end
     
     # Determine output type based on dt
-    Tout = promote_type(T, typeof(dt))
+    #Tout = promote_type(T, typeof(dt))
 
     n = length(v_init)
-    V = zeros(Tout, n, solver.krylov_dim + 1)
-    A_mat = zeros(Tout, solver.krylov_dim, solver.krylov_dim)
-    output_vec = zeros(Tout,n)
-    transit_vec = zeros(Tout,n)
+    V = zeros(T, n, solver.krylov_dim + 1)
+    A_mat = zeros(T, solver.krylov_dim, solver.krylov_dim)
+    output_vec = zeros(T,n)
+    transit_vec = zeros(T,n)
 
     # Normalize and store norm
     v_norm = norm(v_init)
@@ -197,7 +200,7 @@ function _evolve(solver::KrylovExponential, H::EffectiveHamiltonian, v_init::Vec
         end
         V[:,p] = V[:,p]/max(norm(V[:,p]),1e-16);
         if p > 3
-            output_vec = _evol(A_mat[1:p-1,1:p-1],V,dt,output_vec) 
+            output_vec = _evol(A_mat[1:p-1,1:p-1],V,dt,output_vec,solver.evol_type) 
             c = _closeness(transit_vec,output_vec,solver.tol)
             if c == length(output_vec)
                 break
@@ -209,13 +212,17 @@ function _evolve(solver::KrylovExponential, H::EffectiveHamiltonian, v_init::Vec
     return v_norm * output_vec
 end
 
-function _evol(mat,vect,dt,output_vec)
-    c =  exp(-dt*mat)*I(length(mat[:,1]))[:,1]
+function _evol(mat, vect, dt, output_vec, evol_type::Symbol)
+    if evol_type == :real
+        c = exp(-im * dt * mat) * I(length(mat[:,1]))[:, 1]
+    else  # :imaginary
+        c = exp(-dt * mat) * I(length(mat[:,1]))[:, 1]
+    end
     for i in 1:length(c)
-        output_vec += c[i]*vect[:,i]
+        output_vec += c[i] * vect[:, i]
     end
     return output_vec
-end  
+end
 
 function _closeness(list1,list2,cutoff)
     c = 0
