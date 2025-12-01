@@ -147,7 +147,7 @@ config = Dict(
     "algorithm" => Dict(
         "type" => "tdvp",
         "solver" => Dict("type" => "krylov_exponential", 
-                        "krylov_dim" => 20, "tol" => 1e-10),
+                        "krylov_dim" => 20, "tol" => 1e-10,"evol_type"=> "real"),
         "options" => Dict("dt" => 0.01, "chi_max" => 100, 
                          "cutoff" => 1e-10, "local_dim" => 2),
         "run" => Dict("n_sweeps" => 500)
