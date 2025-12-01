@@ -101,10 +101,10 @@ end
 struct KrylovExponential
     krylov_dim::Int
     tol::Float64
-    evol_type::Symbol  # :real or :imaginary
+    evol_type::String  # :real or :imaginary
     
-    function KrylovExponential(krylov_dim=30, tol=1e-12, evol_type=:real)
-        @assert evol_type in (:real, :imaginary) "evol_type must be :real or :imaginary"
+    function KrylovExponential(krylov_dim=30, tol=1e-12, evol_type="real")
+        @assert evol_type in ("real", "imaginary") "evol_type must be real or imaginary"
         new(krylov_dim, tol, evol_type)
     end
 end
@@ -173,9 +173,6 @@ function _evolve(solver::KrylovExponential, H::EffectiveHamiltonian, v_init::Vec
         v_init = randn(T, length(v_init))
     end
     
-    # Determine output type based on dt
-    #Tout = promote_type(T, typeof(dt))
-
     n = length(v_init)
     V = zeros(T, n, solver.krylov_dim + 1)
     A_mat = zeros(T, solver.krylov_dim, solver.krylov_dim)
@@ -212,10 +209,10 @@ function _evolve(solver::KrylovExponential, H::EffectiveHamiltonian, v_init::Vec
     return v_norm * output_vec
 end
 
-function _evol(mat, vect, dt, output_vec, evol_type::Symbol)
-    if evol_type == :real
+function _evol(mat, vect, dt, output_vec, evol_type::String)
+    if evol_type == "real"
         c = exp(-im * dt * mat) * I(length(mat[:,1]))[:, 1]
-    else  # :imaginary
+    else  # "imaginary"
         c = exp(-dt * mat) * I(length(mat[:,1]))[:, 1]
     end
     for i in 1:length(c)
