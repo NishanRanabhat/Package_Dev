@@ -2,7 +2,8 @@
 # PART 1: Solver Builders
 # ============================================================================
 
-function _build_solver_from_config(solver_config)
+function build_solver_from_config(config)
+    solver_config = config["algorithm"]["solver"]
     solver_type = solver_config["type"]
     
     if solver_type == "lanczos"
@@ -13,7 +14,8 @@ function _build_solver_from_config(solver_config)
     elseif solver_type == "krylov_exponential"
         krylov_dim = solver_config["krylov_dim"]
         tol = get(solver_config, "tol", 1e-8)
-        return KrylovExponential(krylov_dim, tol)
+        evol_type = solver_config["evol_type"]
+        return KrylovExponential(krylov_dim, tol,evol_type)
         
     else
         error("Unknown solver type: $solver_type. Use 'lanczos' or 'krylov_exponential'")
@@ -24,7 +26,10 @@ end
 # PART 2: Options Builders
 # ============================================================================
 
-function _build_options_from_config(options_config, algorithm_type)
+function build_options_from_config(config)
+    algorithm_type = config["algorithm"]["type"]
+    options_config = config["algorithm"]["options"]
+
     if algorithm_type == "dmrg"
         chi_max = options_config["chi_max"]
         cutoff = options_config["cutoff"]
@@ -116,21 +121,17 @@ function run_simulation_from_config(config; base_dir="data")
     # ────────────────────────────────────────────────────────────────────────
     
     println("\n[2/5] Parsing algorithm configuration...")
-    
-    alg_config = config["algorithm"]
-    algorithm_type = alg_config["type"]
-    println("  Algorithm: $(algorithm_type)")
-    
+        
     # Build solver
-    solver = _build_solver_from_config(alg_config["solver"])
+    solver = build_solver_from_config(config)
     println("  ✓ Solver: $(typeof(solver))")
     
     # Build options
-    options = _build_options_from_config(alg_config["options"], algorithm_type)
+    options = build_options_from_config(config)
     println("  ✓ Options: $(typeof(options))")
     
     # Get run parameters
-    n_sweeps = alg_config["run"]["n_sweeps"]
+    n_sweeps = config["algorithm"]["run"]["n_sweeps"]
     println("  Sweeps: $n_sweeps")
     
     # ────────────────────────────────────────────────────────────────────────
@@ -141,10 +142,10 @@ function run_simulation_from_config(config; base_dir="data")
     println("="^70)
     
     try
-        if algorithm_type == "dmrg"
+        if config["algorithm"]["type"] == "dmrg"
             _run_dmrg_simulation(state, solver, options, n_sweeps, run_dir)
             
-        elseif algorithm_type == "tdvp"
+        elseif config["algorithm"]["type"] == "tdvp"
             _run_tdvp_simulation(state, solver, options, n_sweeps, run_dir)
             
         else
