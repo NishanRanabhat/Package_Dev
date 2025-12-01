@@ -142,7 +142,8 @@ The algorithm section has three subsections:
 "solver": {
   "type": "krylov_exponential",
   "krylov_dim": 14,
-  "tol": 1e-8
+  "tol": 1e-8,
+  "evol_type":"real"
 }
 ```
 
@@ -155,11 +156,20 @@ The algorithm section has three subsections:
 | `type` | "krylov_exponential" | Solver type |
 | `krylov_dim` | 14 | Krylov subspace dimension |
 | `tol` | 1e-8 | Convergence tolerance |
+| `evol_type` | "real" | Evolution type: "real" or "imaginary" |
+
 
 **Krylov dimension:**
 - Approximates exp(-iHt) in Krylov subspace
 - Larger → more accurate but slower
 - 14 is a robust choice for most systems
+
+**tolerance:**
+- 1e-8 is standard, smaller the better, when tol = 0.0, the method becomes exact
+
+**Evolution type:**
+- `"real"`: Real-time evolution, applies exp(-iHt) — use for quench dynamics, spectral functions
+- `"imaginary"`: Imaginary-time evolution, applies exp(-Ht) — use for cooling to ground state, finite temperature
 
 ### 4.2 Options
 
