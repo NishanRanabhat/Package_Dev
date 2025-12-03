@@ -29,7 +29,7 @@ println("="^70)
 # LOAD CONFIGURATION
 # ============================================================================
 
-config_file = joinpath(@__DIR__, "config.json")
+config_file = joinpath(@__DIR__, "dmrg_config.json")
 config = JSON.parsefile(config_file)
 
 println("\nConfiguration loaded from: config.json")

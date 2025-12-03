@@ -58,8 +58,8 @@ Uses **Density Matrix Renormalization Group (DMRG)**:
 ```
 00_quickstart/
 ├── README.md              # This file
-├── config.json            # All simulation parameters
-├── run_dmrg.jl            # Main script
+├── dmrg_config.json            # All simulation parameters
+├── dmrg_run.jl            # Main script
 ```
 
 ---
@@ -95,7 +95,7 @@ You should see:
 
 ## Understanding the Configuration
 
-The `config.json` file has four main sections:
+The `dmrg_config.json` file has four main sections:
 
 ### 1. System
 ```json
@@ -269,7 +269,7 @@ Package_Dev/data/dmrg/[run_id]/
 ### Try Other Algorithms
 
 **Time evolution:**
-- `examples/tdvp/` - Quantum quench dynamics
+- `examples/01_quickstart_tdvp/` - Quantum quench dynamics
 - Uses TDVP instead of DMRG
 
 ### Explore Advanced Features
