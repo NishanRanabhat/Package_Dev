@@ -22,3 +22,6 @@ Thumbs.db
 
 # Local environment
 .env
+*.jld2
+*.npy
+*.npz
