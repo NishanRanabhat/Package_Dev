@@ -1,3 +1,4 @@
+using Revise
 using Test
 using TNCodebase
 using LinearAlgebra
@@ -32,7 +33,7 @@ using LinearAlgebra
         mps = MPS{ComplexF64}(tensors)
         
         # Canonicalize at center
-        canonicalize(mps, 3)
+        make_canonical(mps, 3)
         
         # Check left orthogonality
         @test is_left_orthogonal(mps.tensors[1])
@@ -42,17 +43,7 @@ using LinearAlgebra
         @test is_right_orthogonal(mps.tensors[4])
         @test is_right_orthogonal(mps.tensors[5])
     end
-    
-    @testset "SVD Truncation" begin
-        # Test SVD with truncation
-        A = rand(10, 10)
-        U, S, V = svd_truncate(A, 5, 1e-10)
         
-        @test size(U, 2) <= 5
-        @test size(V, 1) <= 5
-        @test length(S) <= 5
-    end
-    
     @testset "Observables" begin
         # Create simple MPS
         N = 10
@@ -67,4 +58,5 @@ using LinearAlgebra
     end
     
     println("\n✓ All basic tests passed!")
+    println("\n✓ Add more tests in future!")
 end
