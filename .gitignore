@@ -1,0 +1,24 @@
+# Simulation data (auto-generated)
+data/
+
+# Julia package artifacts
+Manifest.toml
+*.jl.cov
+*.jl.mem
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Local environment
+.env
