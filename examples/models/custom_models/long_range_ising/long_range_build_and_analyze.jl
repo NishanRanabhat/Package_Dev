@@ -61,7 +61,7 @@ println("\n" * "─"^70)
 println("CONFIGURATION:")
 println("─"^70)
 
-config_file = joinpath(@__DIR__, "fsm_model_config.json")
+config_file = joinpath(@__DIR__, "long_range_model_config.json")
 config = JSON.parsefile(config_file)
 
 N = config["model"]["params"]["N"]
